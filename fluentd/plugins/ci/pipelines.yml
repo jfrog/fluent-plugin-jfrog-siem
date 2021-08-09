@@ -1,5 +1,5 @@
 resources:
-  - name: source_repo
+  - name: fluent_plugin_jfrog_siem_repo
     type: GitRepo
     configuration:
       gitProvider: github_integration
@@ -15,7 +15,7 @@ pipelines:
         type: Bash
         configuration:
           inputResources:
-            - name: source_repo
+            - name: fluent_plugin_jfrog_siem_repo
               trigger: true
           runtime:
             type: image
@@ -26,7 +26,7 @@ pipelines:
                 autoPull: true
         execution:
           onExecute:
-            - cd $res_source_repo_resourcePath/fluentd/plugins/input/fluent-plugin-jfrog-siem
+            - cd $res_fluent_plugin_jfrog_siem_repo_resourcePath/fluentd/plugins/input/fluent-plugin-jfrog-siem
             - bundle --version
             - bundle install
             - rspec
