@@ -3,7 +3,7 @@ resources:
     type: GitRepo
     configuration:
       gitProvider: github_integration
-      path: jfrog/log-analytics
+      path: jfrog/fluent-plugin-jfrog-siem
       branches:
         include: concurrent_ruby
 
