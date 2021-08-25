@@ -3,13 +3,13 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 
 Gem::Specification.new do |spec|
   spec.name    = "fluent-plugin-jfrog-siem"
-  spec.version = "2.0.0"
-  spec.authors = ["John Peterson", "Mahitha Byreddy"]
-  spec.email   = ["johnp@jfrog.com", "mahithab@jfrog.com"]
+  spec.version = "2.0.1"
+  spec.authors = ["Mahitha Byreddy", "Sudhindra Rao"]
+  spec.email   = ["mahithab@jfrog.com", "sudhindrar@jfrog.com"]
 
   spec.summary       = %q{JFrog SIEM fluent input plugin will send the SIEM events from JFrog Xray to Fluentd}
   spec.description   = %q{JFrog SIEM fluent input plugin will send the SIEM events from JFrog Xray to Fluentd which can then be delivered to whatever output plugin specified}
-  spec.homepage      = "https://github.com/jfrog/log-analytics"
+  spec.homepage      = "https://github.com/jfrog/fluent-plugin-jfrog-siem"
   spec.license       = "Apache-2.0"
 
   test_files, files  = `git ls-files -z`.split("\x0").partition do |f|
