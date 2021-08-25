@@ -1,6 +1,14 @@
 # JFrog Fluentd SIEM Input Plugin Changelog
 All changes to the SIEM plugin will be documented in this file.
 
+## [2.0.1] - August 25, 2021
+* Pointing documentation to correct repo
+* Changing contributors
+
+## [2.0.0] - August 16, 2021
+* [BREAKING] Changes to config (pos_file_path, from_date)
+* Adding concurrent-ruby dependency
+
 ## [1.0.0] - May 18, 2021
 * [BREAKING] Using JFrog API Key for authentication
 
