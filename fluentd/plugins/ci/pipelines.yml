@@ -2,7 +2,7 @@ resources:
   - name: fluent_plugin_jfrog_siem_repo
     type: GitRepo
     configuration:
-      gitProvider: hmitgangGithub
+      gitProvider: mahithabyreddy_github
       path: jfrog/fluent-plugin-jfrog-siem
       branches:
         include: concurrent_ruby
