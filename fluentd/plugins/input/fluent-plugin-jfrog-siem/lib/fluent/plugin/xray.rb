@@ -58,7 +58,7 @@ class Xray
   def get_violations_detail(xray_violation_detail_url)
     response = RestClient::Request.new(
         :method => :get,
-        :url => xray_violation_detail_url,
+        :url => @jpd_url + xray_violation_detail_url[xray_violation_detail_url.index('/xray/'),xray_violation_detail_url.length],
         :user => @username,
         :password => @api_key
     ).execute do |response, request, result|
