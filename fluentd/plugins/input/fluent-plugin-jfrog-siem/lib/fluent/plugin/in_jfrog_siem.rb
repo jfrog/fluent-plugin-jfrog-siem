@@ -31,7 +31,7 @@ module Fluent
       config_param :tag, :string, default: ""
       config_param :jpd_url, :string, default: ""
       config_param :username, :string, default: ""
-      config_param :apikey, :string, default: ""
+      config_param :apikey, :string, default: "", :secret => true
       config_param :batch_size, :integer, default: 25
       config_param :wait_interval, :integer, default: 60
       config_param :from_date, :string, default: ""
