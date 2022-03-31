@@ -4,10 +4,11 @@ require 'json'
 require "fluent/plugin/position_file"
 
 class Xray
-  def initialize(jpd_url, username, api_key, wait_interval, batch_size, pos_file_path, router, tag)
+  def initialize(jpd_url, username, api_key, token, wait_interval, batch_size, pos_file_path, router, tag)
     @jpd_url = jpd_url
     @username = username
     @api_key = api_key
+    @token = token
     @wait_interval = wait_interval
     @batch_size = batch_size
     @pos_file_path = pos_file_path
@@ -56,18 +57,28 @@ class Xray
   end
 
   def get_violations_detail(xray_violation_detail_url)
-    response = RestClient::Request.new(
-        :method => :get,
-        :url => @jpd_url + xray_violation_detail_url[xray_violation_detail_url.index('/xray/'),xray_violation_detail_url.length],
-        :user => @username,
-        :password => @api_key
-    ).execute do |response, request, result|
+    if !@api_key.nil? && @api_key != ''
+      response = RestClient::Request.new(
+          :method => :get,
+          :url => @jpd_url + xray_violation_detail_url[xray_violation_detail_url.index('/xray/'),xray_violation_detail_url.length],
+          :user => @username,
+          :password => @api_key
+      )
+    elsif !@token.nil? && @token != ''
+      response = RestClient::Request.new(
+          :method => :get,
+          :url => @jpd_url + xray_violation_detail_url[xray_violation_detail_url.index('/xray/'),xray_violation_detail_url.length],
+          :headers => { :accept => :json, :content_type => :json, Authorization:'Bearer ' + @token }
+      )
+    end
+
+    response.execute do |response, request, result|
       case response.code
       when 200
         return JSON.parse(response.to_s)
       else
         puts "error: #{response.to_json}"
-        raise Fluent::ConfigError, "Cannot reach Artifactory URL to pull Xray SIEM violations."
+        raise Fluent::ConfigError, "Cannot reach Artifactory URL to pull Xray SIEM violations details."
       end
     end
   end
@@ -138,14 +149,24 @@ class Xray
 
   private
   def get_violations(xray_json)
-    response = RestClient::Request.new(
-        :method => :post,
-        :url => @jpd_url + "/xray/api/v1/violations",
-        :payload => xray_json.to_json,
-        :user => @username,
-        :password => @api_key,
-        :headers => { :accept => :json, :content_type => :json }
-    ).execute do |response, request, result|
+    if !@api_key.nil? && @api_key != ''
+      response = RestClient::Request.new(
+          :method => :post,
+          :url => @jpd_url + "/xray/api/v1/violations",
+          :payload => xray_json.to_json,
+          :user => @username,
+          :password => @api_key,
+          :headers => { :accept => :json, :content_type => :json }
+      )
+    elsif !@token.nil? && @token != ''
+      response = RestClient::Request.new(
+          :method => :post,
+          :url => @jpd_url + "/xray/api/v1/violations",
+          :payload => xray_json.to_json,
+          :headers => { :accept => :json, :content_type => :json, Authorization:'Bearer ' + @token }
+      )
+    end
+    response.execute do |response, request, result|
       case response.code
       when 200
         return JSON.parse(response.to_str)
