@@ -32,6 +32,7 @@ module Fluent
       config_param :jpd_url, :string, default: ""
       config_param :username, :string, default: ""
       config_param :apikey, :string, default: "", :secret => true
+      config_param :token, :string, default: "", :secret => true
       config_param :batch_size, :integer, default: 25
       config_param :wait_interval, :integer, default: 60
       config_param :from_date, :string, default: ""
@@ -54,9 +55,7 @@ module Fluent
           raise Fluent::ConfigError, "Must define the username to use for authentication."
         end
 
-        if @apikey == ""
-          raise Fluent::ConfigError, "Must define the API Key to use for authentication."
-        end
+        raise Fluent::ConfigError, 'Must define the apikey or token for authentication.' if @token == '' &&  @apikey == ''
 
         if @wait_interval < 1
           raise Fluent::ConfigError, "Wait interval must be greater than 1 to wait between pulling new events."
@@ -94,7 +93,7 @@ module Fluent
         end
         date_since = last_created_date
         puts "Getting queries from #{date_since}"
-        xray = Xray.new(@jpd_url, @username, @apikey, @wait_interval, @batch_size, @pos_file_path, router, @tag)
+        xray = Xray.new(@jpd_url, @username, @apikey, @token, @wait_interval, @batch_size, @pos_file_path, router, @tag)
         violations_channel = xray.violations(date_since)
         xray.violation_details(violations_channel)
         sleep 100
