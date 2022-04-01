@@ -57,18 +57,18 @@ class Xray
   end
 
   def get_violations_detail(xray_violation_detail_url)
-    if !@api_key.nil? && @api_key != ''
+    if !@token.nil? && @token != ''
+      response = RestClient::Request.new(
+          :method => :get,
+          :url => @jpd_url + xray_violation_detail_url[xray_violation_detail_url.index('/xray/'),xray_violation_detail_url.length],
+          :headers => { :accept => :json, :content_type => :json, Authorization:'Bearer ' + @token }
+      )
+    elsif !@api_key.nil? && @api_key != ''
       response = RestClient::Request.new(
           :method => :get,
           :url => @jpd_url + xray_violation_detail_url[xray_violation_detail_url.index('/xray/'),xray_violation_detail_url.length],
           :user => @username,
           :password => @api_key
-      )
-    elsif !@token.nil? && @token != ''
-      response = RestClient::Request.new(
-          :method => :get,
-          :url => @jpd_url + xray_violation_detail_url[xray_violation_detail_url.index('/xray/'),xray_violation_detail_url.length],
-          :headers => { :accept => :json, :content_type => :json, Authorization:'Bearer ' + @token }
       )
     end
 
@@ -149,7 +149,14 @@ class Xray
 
   private
   def get_violations(xray_json)
-    if !@api_key.nil? && @api_key != ''
+    if !@token.nil? && @token != ''
+      response = RestClient::Request.new(
+          :method => :post,
+          :url => @jpd_url + "/xray/api/v1/violations",
+          :payload => xray_json.to_json,
+          :headers => { :accept => :json, :content_type => :json, Authorization:'Bearer ' + @token }
+      )
+    elsif !@api_key.nil? && @api_key != ''
       response = RestClient::Request.new(
           :method => :post,
           :url => @jpd_url + "/xray/api/v1/violations",
@@ -157,13 +164,6 @@ class Xray
           :user => @username,
           :password => @api_key,
           :headers => { :accept => :json, :content_type => :json }
-      )
-    elsif !@token.nil? && @token != ''
-      response = RestClient::Request.new(
-          :method => :post,
-          :url => @jpd_url + "/xray/api/v1/violations",
-          :payload => xray_json.to_json,
-          :headers => { :accept => :json, :content_type => :json, Authorization:'Bearer ' + @token }
       )
     end
     response.execute do |response, request, result|
