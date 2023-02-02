@@ -3,7 +3,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 
 Gem::Specification.new do |spec|
   spec.name    = "fluent-plugin-jfrog-siem"
-  spec.version = "2.0.3"
+  spec.version = "2.0.5"
   spec.authors = ["Mahitha Byreddy", "Sudhindra Rao","Giridharan Ramasamy"]
   spec.email   = ["mahithab@jfrog.com", "sudhindrar@jfrog.com", "girir@jfrog.com"]
 
@@ -24,7 +24,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rake", "~> 12.0"
   spec.add_development_dependency "test-unit", "~> 3.0"
   spec.add_development_dependency "rest-client", "~> 2.0"
-  spec.add_development_dependency "concurrent-ruby", "~> 1.1.8"
+  spec.add_development_dependency "concurrent-ruby", "~> 1.1.8" , "< 1.1.10"
   spec.add_development_dependency "concurrent-ruby-edge", '>= 0'
   spec.add_development_dependency 'rspec', '~> 3.10.0'
 
