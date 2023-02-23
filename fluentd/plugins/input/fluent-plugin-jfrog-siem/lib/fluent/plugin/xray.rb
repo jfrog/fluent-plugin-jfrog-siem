@@ -21,6 +21,7 @@ class Xray
     page_number = 1
     timer_task = Concurrent::TimerTask.new(execution_interval: @wait_interval, timeout_interval: 30) do
       xray_json = {"filters": { "created_from": date_since }, "pagination": {"order_by": "created","limit": @batch_size ,"offset": page_number } }
+      puts "Fetching Xray Violations with #{xray_json} parameters"
       resp = get_violations(xray_json)
       page_violation_count = resp['violations'].length
       puts "Total violations count is #{resp['total_violations']}"
@@ -38,21 +39,23 @@ class Xray
   def violation_details(violations_channel)
     violations_channel.each do |v|
       Concurrent::Promises.future(v) do |v|
-        pull_violation_details(v['violation_details_url'])
+        process_violation_details(v['violation_details_url'])
         pos_file = PositionFile.new(@pos_file_path)
+        puts "Adding issue #{v['issue_id']} to position file at #{@pos_file_path}"
         pos_file.write(v)
       end
     end
   end
 
-  def pull_violation_details(xray_violation_detail_url)
+  def process_violation_details(xray_violation_detail_url)
     begin
       detailResp_json = data_normalization(get_violations_detail(xray_violation_detail_url))
       time = Fluent::Engine.now
+      puts "Emitting normalized Xray Violation #{detailResp_json['issue_id']}"
       @router.emit(@tag, time, detailResp_json)
     rescue => e
-      puts "error: #{e}"
-      raise Fluent::ConfigError, "Error pulling violation details url #{xray_violation_detail_url}: #{e}"
+      puts "Process Violation details error: #{e}"
+      raise Fluent::ConfigError, "Process Violation details error: #{e}"
     end
   end
 
@@ -77,8 +80,8 @@ class Xray
       when 200
         return JSON.parse(response.to_s)
       else
-        puts "error: #{response.to_json}"
-        raise Fluent::ConfigError, "Cannot reach Artifactory URL to pull Xray SIEM violations details."
+        puts "Validation failed error (cannot reach Artifactory to pull Xray Violation details): #{response.to_json}"
+        raise Fluent::ConfigError, "Validation failed error (cannot reach Artifactory to pull Xray Violation details): #{response.to_json}"
       end
     end
   end
@@ -143,13 +146,19 @@ class Xray
 
   def process(violation, violations_channel)
     pos_file = PositionFile.new(@pos_file_path)
-    violations_channel << violation unless pos_file.processed?(violation)
+    unless pos_file.processed?(violation)
+      violations_channel << violation
+    else
+      puts "Violation #{violation['issue_id']} is already processed"
+    end
+    #violations_channel << violation unless pos_file.processed?(violation)
     violations_channel
   end
 
   private
   def get_violations(xray_json)
     if !@token.nil? && @token != ''
+      puts "Validating JPD access token and fetching violations"
       response = RestClient::Request.new(
           :method => :post,
           :url => @jpd_url + "/xray/api/v1/violations",
@@ -157,6 +166,7 @@ class Xray
           :headers => { :accept => :json, :content_type => :json, Authorization:'Bearer ' + @token }
       )
     elsif !@api_key.nil? && @api_key != ''
+      puts "Validating JPD API Key and fetching violations"
       response = RestClient::Request.new(
           :method => :post,
           :url => @jpd_url + "/xray/api/v1/violations",
@@ -171,8 +181,8 @@ class Xray
       when 200
         return JSON.parse(response.to_str)
       else
-        puts "error: #{response.to_json}"
-        raise Fluent::ConfigError, "Cannot reach Artifactory URL to pull Xray SIEM violations. #{response.to_json}"
+        puts "Validation failed error (cannot reach Artifactory to pull Xray Violations): #{response.to_json}"
+        raise Fluent::ConfigError, "Validation failed error (cannot reach Artifactory to pull Xray Violations): #{response.to_json}"
       end
     end
   end
