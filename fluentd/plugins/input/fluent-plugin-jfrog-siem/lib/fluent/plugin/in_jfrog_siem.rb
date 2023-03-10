@@ -118,9 +118,11 @@ module Fluent
       def get_last_item_create_date()
         recent_pos_file = get_recent_pos_file()
         if recent_pos_file != nil
+          puts "Position file already exists so pulling the latest create_date from it"
           last_created_date_string = IO.readlines(recent_pos_file).last
           return DateTime.parse(last_created_date_string).strftime("%Y-%m-%dT%H:%M:%SZ")
         else
+          puts "Position file doesn't exist so fetching current DateTime to form a new position file"
           return DateTime.now.strftime("%Y-%m-%dT%H:%M:%SZ")
         end
       end
