@@ -137,8 +137,12 @@ class Xray
 
     detailResp_json['impacted_artifacts'].each do |impacted_artifact|
       matchdata = impacted_artifact.match /default\/(?<repo_name>[^\/]*)\/(?<path>.*)/
-      impacted_artifact_url = matchdata['repo_name'] + ":" + matchdata['path'] + " "
-      impacted_artifact_url_list.append(impacted_artifact_url)
+      if matchdata
+        impacted_artifact_url = matchdata['repo_name'] + ":" + matchdata['path'] + " "
+        impacted_artifact_url_list.append(impacted_artifact_url)
+      else
+        impacted_artifact_url_list.append(impacted_artifact)
+      end
     end
     detailResp_json['impacted_artifacts_url'] = impacted_artifact_url_list
     return detailResp_json
