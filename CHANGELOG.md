@@ -1,11 +1,18 @@
 # JFrog Fluentd SIEM Input Plugin Changelog
 All changes to the SIEM plugin will be documented in this file.
 
+## [2.0.8]
+* Removing concurrent-ruby specific version constraints (for timer task dependency)
+
+## [2.0.7]
+* Adding new test for violations
+* Fixing impacted_artifact not matched url
+
 ## [2.0.6]
 * Adding additional logs for better visibility into issues
 
 ## [2.0.5]
-* Fixing concurrent-ruby version to lesst than 1.1.10 for timer task dependency
+* Fixing concurrent-ruby version to less than 1.1.10 for timer task dependency
 
 ## [2.0.1] - August 25, 2021
 * Pointing documentation to correct repo

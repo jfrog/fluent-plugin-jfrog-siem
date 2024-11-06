@@ -4,12 +4,12 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 Gem::Specification.new do |spec|
   spec.name    = "fluent-jfrog-test-plugin"
   spec.version = "0.1.0"
-  spec.authors = ["John Peterson"]
-  spec.email   = ["johnp@jfrog.com"]
+  spec.authors = ["Ben Harosh"]
+  spec.email   = ["partner-support@jfrog.com"]
 
   spec.summary       = %q{JFrog Test Plugin to Verify Fluentd with JFrog Platform}
   spec.description   = %q{JFrog Test Plugin to Verify Fluentd with JFrog Platform}
-  spec.homepage      = "https://github.com/jfrog/log-analytics"
+  spec.homepage      = "https://github.com/jfrog/fluent-plugin-jfrog-siem"
   spec.license       = "Apache-2.0"
 
   test_files, files  = `git ls-files -z`.split("\x0").partition do |f|

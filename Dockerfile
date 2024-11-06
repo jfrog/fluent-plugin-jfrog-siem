@@ -1,4 +1,4 @@
-FROM bitnami/fluentd:1.12.3
+FROM bitnami/fluentd:1.17.1
 LABEL maintainer "JFrog <partner-support@jfrog.com>"
 
 ## requires to be root to install fluentd plugins
