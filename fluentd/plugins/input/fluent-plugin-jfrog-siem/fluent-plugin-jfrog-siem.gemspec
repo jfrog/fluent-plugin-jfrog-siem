@@ -3,9 +3,9 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 
 Gem::Specification.new do |spec|
   spec.name    = "fluent-plugin-jfrog-siem"
-  spec.version = "2.0.7"
-  spec.authors = ["Mahitha Byreddy", "Sudhindra Rao","Giridharan Ramasamy"]
-  spec.email   = ["mahithab@jfrog.com", "sudhindrar@jfrog.com", "girir@jfrog.com"]
+  spec.version = "2.0.8"
+  spec.authors = ["Mahitha Byreddy", "Ben Harosh"]
+  spec.email   = ["partner-support@jfrog.com"]
 
   spec.summary       = %q{JFrog SIEM fluent input plugin will send the SIEM events from JFrog Xray to Fluentd}
   spec.description   = %q{JFrog SIEM fluent input plugin will send the SIEM events from JFrog Xray to Fluentd which can then be delivered to whatever output plugin specified}
@@ -24,12 +24,10 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rake", "~> 12.0"
   spec.add_development_dependency "test-unit", "~> 3.0"
   spec.add_development_dependency "rest-client", "~> 2.0"
-  spec.add_development_dependency "concurrent-ruby", "~> 1.1.8" , "< 1.1.10"
   spec.add_development_dependency "concurrent-ruby-edge", '>= 0'
   spec.add_development_dependency 'rspec', '~> 3.10.0'
 
   spec.add_runtime_dependency "rest-client", "~> 2.0"
-  spec.add_runtime_dependency "concurrent-ruby", "~> 1.1.8" , "< 1.1.10"
   spec.add_runtime_dependency "concurrent-ruby-edge", '>= 0'
   spec.add_runtime_dependency "fluentd", [">= 0.14.10", "< 2"]
 end
