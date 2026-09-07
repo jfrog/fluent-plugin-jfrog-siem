@@ -115,10 +115,12 @@ class Xray
       elsif !cvss_v2.nil?
         cvss = cvss_v2
       end
-      cvss_score = cvss[0..2]
-      cvss_version = cvss.split(':')[1][0..2]
-      detailResp_json["cvss_score"] = cvss_score
-      detailResp_json["cvss_version"] = cvss_version
+      if !cvss.nil?
+        cvss_score = cvss[0..2]
+        cvss_version = cvss.split(':')[1][0..2]
+        detailResp_json["cvss_score"] = cvss_score
+        detailResp_json["cvss_version"] = cvss_version
+      end
     end
 
     if detailResp_json.key?('matched_policies')
