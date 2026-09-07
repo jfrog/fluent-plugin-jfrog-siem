@@ -1,6 +1,9 @@
 # JFrog Fluentd SIEM Input Plugin Changelog
 All changes to the SIEM plugin will be documented in this file.
 
+## [2.0.9]
+* Handle Xray violations without CVSS data (License, Operational Risk) without raising errors (JOBS-2850)
+
 ## [2.0.8]
 * Removing concurrent-ruby specific version constraints (for timer task dependency)
 
