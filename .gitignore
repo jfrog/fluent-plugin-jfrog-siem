@@ -6,3 +6,12 @@
 .idea/
 .DS_Store
 **/test_pos.txt
+
+# Local Bundler / gem install artifacts
+**/.bundle/
+**/vendor/bundle/
+**/vendor/ruby/
+coverage/
+spec/examples.txt
+pkg/
+tmp/
