@@ -1,12 +1,15 @@
 # spec/data_normalization_spec.rb
 #
 # Tests for Xray#data_normalization covering JOBS-2850:
-#   When violation properties lack cvss_v2 / cvss_v3 (License or Operational
-#   Risk violations) the method must NOT raise NoMethodError on `cvss[0..2]`.
+#   When violation properties lack cvss_v2 / cvss_v3 (e.g. Security violations
+#   for issues with no CVSS score, or only a CVSS v4 score) the method must NOT
+#   raise NoMethodError on `cvss[0..2]`.
 #
 # Expected results before the fix:
-#   - License / Operational-Risk tests → FAIL  (demonstrates the bug)
-#   - Security-with-CVSS tests          → PASS  (existing logic is correct)
+#   - Violations without CVSS v2/v3 data   → FAIL  (demonstrates the bug)
+#   - CVSS score without a vector          → FAIL
+#   - Missing impacted_artifacts           → FAIL
+#   - Security-with-CVSS v2/v3 tests       → PASS  (existing logic is correct)
 
 [
   File.join(File.dirname(__FILE__), '..'),
@@ -91,6 +94,139 @@ RSpec.describe Xray, '#data_normalization' do
     it 'does not set cvss_version when CVSS data is absent' do
       result = xray.data_normalization(op_risk_violation)
       expect(result).not_to have_key('cvss_version')
+    end
+  end
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # JOBS-2850: Security violation with a CVE but no CVSS data at all
+  # ─────────────────────────────────────────────────────────────────────────
+  describe 'Security violation with a CVE but without CVSS data' do
+    let(:security_violation_no_cvss) do
+      {
+        'issue_id'           => 'SIEMTEST-NOCVSS-1',
+        'type'               => 'Security',
+        'properties'         => [{ 'cve' => 'CVE-2099-28500' }],
+        'impacted_artifacts' => ['default/npm-siem-test/siem-mit-pkg/-/siem-mit-pkg-1.0.0.tgz']
+      }
+    end
+
+    it 'does not raise an error (regression for JOBS-2850)' do
+      expect { xray.data_normalization(security_violation_no_cvss) }.not_to raise_error
+    end
+
+    it 'still sets the cve' do
+      result = xray.data_normalization(security_violation_no_cvss)
+      expect(result['cve']).to eq('CVE-2099-28500')
+    end
+
+    it 'does not set cvss_score or cvss_version' do
+      result = xray.data_normalization(security_violation_no_cvss)
+      expect(result).not_to have_key('cvss_score')
+      expect(result).not_to have_key('cvss_version')
+    end
+  end
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # JOBS-2850: Security violation with only a CVSS v4 score
+  # ─────────────────────────────────────────────────────────────────────────
+  describe 'Security violation with only CVSS v4 data' do
+    let(:security_violation_v4) do
+      {
+        'issue_id'           => 'XRAY-1073490',
+        'type'               => 'Security',
+        'properties'         => [
+          {
+            'cve'     => 'CVE-2026-84445',
+            'cwe'     => ['CWE-129', 'CWE-248'],
+            'cvss_v4' => '8.7/CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:H/SC:N/SI:N/SA:N'
+          }
+        ],
+        'impacted_artifacts' => ['default/build-info/some-build']
+      }
+    end
+
+    it 'does not raise an error (regression for JOBS-2850)' do
+      expect { xray.data_normalization(security_violation_v4) }.not_to raise_error
+    end
+
+    it 'sets cvss_score from cvss_v4' do
+      result = xray.data_normalization(security_violation_v4)
+      expect(result['cvss_score']).to eq('8.7')
+    end
+
+    it 'sets cvss_version from cvss_v4' do
+      result = xray.data_normalization(security_violation_v4)
+      expect(result['cvss_version']).to eq('4.0')
+    end
+  end
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Security violation with both CVSS v3 and v4 — v3 is kept
+  # ─────────────────────────────────────────────────────────────────────────
+  describe 'Security violation with both CVSS v3 and v4 (v3 kept)' do
+    let(:security_violation_v3_v4) do
+      {
+        'issue_id'           => 'CVE-2024-5678',
+        'type'               => 'Security',
+        'properties'         => [
+          {
+            'cve'     => 'CVE-2024-5678',
+            'cvss_v3' => '7.5/CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H',
+            'cvss_v4' => '8.7/CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:H/SC:N/SI:N/SA:N'
+          }
+        ],
+        'impacted_artifacts' => ['default/maven-repo/some-lib/1.0/some-lib-1.0.jar']
+      }
+    end
+
+    it 'uses cvss_v3, not cvss_v4' do
+      result = xray.data_normalization(security_violation_v3_v4)
+      expect(result['cvss_score']).to eq('7.5')
+      expect(result['cvss_version']).to eq('3.1')
+    end
+  end
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Security violation with a CVSS score but no vector (e.g. custom issues)
+  # ─────────────────────────────────────────────────────────────────────────
+  describe 'Security violation with a CVSS score but no vector' do
+    let(:security_violation_score_only) do
+      {
+        'issue_id'           => 'CUSTOM-ISSUE-1',
+        'type'               => 'Security',
+        'properties'         => [{ 'cve' => 'CVE-2017-1000386', 'cvss_v2' => '2.4' }],
+        'impacted_artifacts' => ['default/maven-repo/aero/aero/0.2.3/aero-0.2.3.jar']
+      }
+    end
+
+    it 'does not raise an error' do
+      expect { xray.data_normalization(security_violation_score_only) }.not_to raise_error
+    end
+
+    it 'sets cvss_score' do
+      result = xray.data_normalization(security_violation_score_only)
+      expect(result['cvss_score']).to eq('2.4')
+    end
+
+    it 'does not set cvss_version' do
+      result = xray.data_normalization(security_violation_score_only)
+      expect(result).not_to have_key('cvss_version')
+    end
+  end
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Violation without impacted_artifacts (key absent or null)
+  # ─────────────────────────────────────────────────────────────────────────
+  describe 'Violation without impacted_artifacts' do
+    it 'does not raise an error when the key is absent' do
+      violation = { 'issue_id' => 'CVE-2099-28500', 'type' => 'Security', 'properties' => [{ 'cve' => 'CVE-2099-28500' }] }
+      expect { xray.data_normalization(violation) }.not_to raise_error
+    end
+
+    it 'sets an empty impacted_artifacts_url when the value is null' do
+      violation = { 'issue_id' => 'CVE-2099-28500', 'type' => 'Security', 'impacted_artifacts' => nil }
+      result = xray.data_normalization(violation)
+      expect(result['impacted_artifacts_url']).to eq([])
     end
   end
 

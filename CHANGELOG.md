@@ -2,7 +2,9 @@
 All changes to the SIEM plugin will be documented in this file.
 
 ## [2.0.9]
-* Handle Xray violations without CVSS data (License, Operational Risk) without raising errors (JOBS-2850)
+* Handle Xray violations without CVSS v2/v3 data (e.g. Security violations with no CVSS score) without raising errors (JOBS-2850)
+* Use the CVSS v4 score when a violation has no CVSS v3 or v2 score
+* Handle a CVSS score that has no vector (e.g. `2.4`) and violations without `impacted_artifacts` without raising errors
 
 ## [2.0.8]
 * Removing concurrent-ruby specific version constraints (for timer task dependency)
