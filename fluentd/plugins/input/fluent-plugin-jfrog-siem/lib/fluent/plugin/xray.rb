@@ -90,6 +90,7 @@ class Xray
     cve = []
     cvss_v2_list = []
     cvss_v3_list = []
+    cvss_v4_list = []
     policy_list = []
     rule_list = []
     impacted_artifact_url_list = []
@@ -105,20 +106,32 @@ class Xray
         if properties[index].key?('cvss_v3')
           cvss_v3_list.push(properties[index]['cvss_v3'])
         end
+        if properties[index].key?('cvss_v4')
+          cvss_v4_list.push(properties[index]['cvss_v4'])
+        end
       end
 
       detailResp_json["cve"] = cve.sort.reverse[0]
       cvss_v2 = cvss_v2_list.sort.reverse[0]
       cvss_v3 = cvss_v3_list.sort.reverse[0]
+      cvss_v4 = cvss_v4_list.sort.reverse[0]
+      # cvss_v4 is only a fallback so the reported score doesn't change for violations that also have v3/v2
       if !cvss_v3.nil?
         cvss = cvss_v3
       elsif !cvss_v2.nil?
         cvss = cvss_v2
+      elsif !cvss_v4.nil?
+        cvss = cvss_v4
       end
-      cvss_score = cvss[0..2]
-      cvss_version = cvss.split(':')[1][0..2]
-      detailResp_json["cvss_score"] = cvss_score
-      detailResp_json["cvss_version"] = cvss_version
+      if !cvss.nil?
+        cvss_score = cvss[0..2]
+        detailResp_json["cvss_score"] = cvss_score
+        # A score without a vector (e.g. "2.4") has no ':' to take the version from
+        cvss_version_part = cvss.split(':')[1]
+        if !cvss_version_part.nil?
+          detailResp_json["cvss_version"] = cvss_version_part[0..2]
+        end
+      end
     end
 
     if detailResp_json.key?('matched_policies')
@@ -135,7 +148,7 @@ class Xray
       detailResp_json['rules'] = rule_list
     end
 
-    detailResp_json['impacted_artifacts'].each do |impacted_artifact|
+    (detailResp_json['impacted_artifacts'] || []).each do |impacted_artifact|
       matchdata = impacted_artifact.match /default\/(?<repo_name>[^\/]*)\/(?<path>.*)/
       if matchdata
         impacted_artifact_url = matchdata['repo_name'] + ":" + matchdata['path'] + " "
