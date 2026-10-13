@@ -1,0 +1,58 @@
+name: Release gem
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    name: Build and push to RubyGems
+    if: github.ref_type == 'tag' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: rubygems
+    permissions:
+      contents: read
+      id-token: write
+    defaults:
+      run:
+        working-directory: fluentd/plugins/input/fluent-plugin-jfrog-siem
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+
+      - name: Check tag matches gemspec version
+        if: github.ref_type == 'tag'
+        run: |
+          gem_version=$(ruby -e 'puts Gem::Specification.load("fluent-plugin-jfrog-siem.gemspec").version')
+          if [ "v${gem_version}" != "${GITHUB_REF_NAME}" ]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} does not match gemspec version ${gem_version}"
+            exit 1
+          fi
+
+      # Gemfile.lock only lists darwin platforms
+      - name: Install dependencies
+        run: |
+          bundle lock --add-platform x86_64-linux
+          bundle install
+
+      - name: Run specs
+        run: bundle exec rspec spec/data_normalization_spec.rb
+
+      - name: Build gem
+        run: gem build fluent-plugin-jfrog-siem.gemspec
+
+      # Uses the RUBYGEMS_API_KEY secret if set, otherwise RubyGems trusted publishing (OIDC)
+      - uses: rubygems/configure-rubygems-credentials@v2.1.0
+        with:
+          api-token: ${{ secrets.RUBYGEMS_API_KEY }}
+
+      - name: Push gem
+        run: gem push fluent-plugin-jfrog-siem-*.gem
