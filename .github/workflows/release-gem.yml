@@ -18,11 +18,13 @@ jobs:
     permissions:
       contents: read
       id-token: write
+    env:
+      RUBYGEMS_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
     defaults:
       run:
         working-directory: fluentd/plugins/input/fluent-plugin-jfrog-siem
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: ruby/setup-ruby@v1
         with:
@@ -49,10 +51,14 @@ jobs:
       - name: Build gem
         run: gem build fluent-plugin-jfrog-siem.gemspec
 
-      # Uses the RUBYGEMS_API_KEY secret if set, otherwise RubyGems trusted publishing (OIDC)
-      - uses: rubygems/configure-rubygems-credentials@v2.1.0
-        with:
-          api-token: ${{ secrets.RUBYGEMS_API_KEY }}
+      # Trusted publishing (OIDC) is only used when no RUBYGEMS_API_KEY secret is set
+      - name: Configure trusted publishing
+        if: env.RUBYGEMS_API_KEY == ''
+        uses: rubygems/configure-rubygems-credentials@v2.1.0
 
       - name: Push gem
-        run: gem push fluent-plugin-jfrog-siem-*.gem
+        run: |
+          if [ -n "${RUBYGEMS_API_KEY}" ]; then
+            export GEM_HOST_API_KEY="${RUBYGEMS_API_KEY}"
+          fi
+          gem push fluent-plugin-jfrog-siem-*.gem
